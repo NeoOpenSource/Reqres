@@ -8,7 +8,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 
-class DomainRepository(private val repository: DataRepository, private val userDao: UserDao) {
+class DomainRepository(private val repository: IDataRepository, private val userDao: UserDao):IDomainRepository {
 
 
     fun readUserApi(): Single<DataResponseState<List<UserInformation>>> {
@@ -29,14 +29,14 @@ class DomainRepository(private val repository: DataRepository, private val userD
         return repository.getUser()
     }
 
-    private fun toUserTable(user: User): Single<DataResponseState<List<UserTable>>> {
+    override fun toUserTable(user: User): Single<DataResponseState<List<UserTable>>> {
         val data = ArrayList<UserTable>(user.data.size)
         user.data.forEach {
             data.add(
                 UserTable(
                     id = it.id.toString(),
                     first_name = it.first_name,
-                    last_name = it.first_name,
+                    last_name = it.last_name,
                     email = it.email,
                     avatar = it.avatar
                 )
@@ -45,7 +45,7 @@ class DomainRepository(private val repository: DataRepository, private val userD
         return Single.just(DataResponseState.Success(data))
     }
 
-    private fun userListIsEmpty(data: DataResponseState<List<UserTable>>): Observable<DataResponseState<List<UserTable>>> {
+     override fun userListIsEmpty(data: DataResponseState<List<UserTable>>): Observable<DataResponseState<List<UserTable>>> {
         return when (data) {
             is DataResponseState.Error -> Observable.just(data)
             is DataResponseState.Success -> {
@@ -59,7 +59,7 @@ class DomainRepository(private val repository: DataRepository, private val userD
     }
 
 
-    private fun toUserList(state: DataResponseState<List<UserTable>>): Single<DataResponseState<List<UserInformation>>> {
+     override fun toUserList(state: DataResponseState<List<UserTable>>): Single<DataResponseState<List<UserInformation>>> {
         return when (state) {
             is DataResponseState.Error -> Single.just(state)
             is DataResponseState.Success -> {
