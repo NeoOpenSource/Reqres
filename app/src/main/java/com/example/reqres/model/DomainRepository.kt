@@ -3,16 +3,19 @@ package com.example.reqres.model
 import User
 import com.example.reqres.database.UserDao
 import com.example.reqres.database.UserTable
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import com.example.reqres.utils.ISchedulerProvider
+import com.example.reqres.utils.SchedulerProvider
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.schedulers.Schedulers
 
 class DomainRepository(private val repository: IDataRepository, private val userDao: UserDao):IDomainRepository {
 
-
+    private var schedulerProvider: ISchedulerProvider = SchedulerProvider()
+    fun setISchedulerProvider(schedulerProvider: ISchedulerProvider){
+        this.schedulerProvider = schedulerProvider
+    }
     fun readUserApi(): Single<DataResponseState<List<UserInformation>>> {
-        return readUserData().subscribeOn(Schedulers.io()).toObservable().flatMap {
+        return readUserData().subscribeOn(schedulerProvider.io()).toObservable().flatMap {
             userListIsEmpty(it)
         }.switchIfEmpty(getUserApi().flatMap {
             toUserTable(it)
@@ -22,7 +25,7 @@ class DomainRepository(private val repository: IDataRepository, private val user
             readUserData()
         }.toObservable()).single(DataResponseState.Error(Throwable("is default value"))).flatMap {
             toUserList(it)
-        }.observeOn(AndroidSchedulers.mainThread())
+        }.observeOn(schedulerProvider.mainThread())
     }
 
     private fun getUserApi(): Single<User> {
